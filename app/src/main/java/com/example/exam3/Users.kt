@@ -1,7 +1,7 @@
 package com.example.exam3
 
 data class Users(
-    val name: String,
-    val lastName: String,
-    val email: String? = null
+    var name: String,
+    var lastName: String,
+    var email: String? = null
 )

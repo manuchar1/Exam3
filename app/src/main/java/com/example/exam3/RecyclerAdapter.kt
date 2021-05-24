@@ -1,103 +1,119 @@
 package com.example.exam3
 
+import android.app.AlertDialog
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.example.exam3.databinding.LayoutListItemBinding
 
 
 class RecyclerAdapter(
-    private val countries: List<Users>,
+    val context: Context,
+    private val userList: List<Users>,
     private var listener: OnItemModelClickListener
-) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+) : RecyclerView.Adapter<RecyclerAdapter.UserProfileViewHolder>() {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return if (viewType == NORMAL_USER) {
-            UserProfileViewHolder(
-                LayoutListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            )
-        } else {
-            UserWithoutPhotoViewHolder(
-                LayoutListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            )
-        }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserProfileViewHolder {
+
+
+        val binding: LayoutListItemBinding =
+            LayoutListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return UserProfileViewHolder(binding)
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when (holder) {
-            is UserWithoutPhotoViewHolder -> holder.bind()
-            is UserProfileViewHolder -> holder.bind()
+    override fun onBindViewHolder(holder: UserProfileViewHolder, position: Int) {
+        holder.bind()
 
-        }
+
     }
 
-    override fun getItemCount() = countries.size
+    override fun getItemCount() = userList.size
 
 
-    inner class UserWithoutPhotoViewHolder(private val binding: LayoutListItemBinding) :
-        RecyclerView.ViewHolder(binding.root), View.OnLongClickListener {
-        private lateinit var users: Users
-        fun bind() {
-            users = this@RecyclerAdapter.countries[adapterPosition]
-            binding.tvName.text = users.name
-            binding.tvSurname.text = users.name
-            binding.tvEmail.text = users.email
-        }
-
-        init {
-            itemView.setOnLongClickListener(this)
-        }
-
-        override fun onLongClick(v: View?): Boolean {
-            val position = adapterPosition
-            if (position != RecyclerView.NO_POSITION) {
-                listener.onItemClick(position)
-            }
-            return true
-
-        }
-
-    }
 
     inner class UserProfileViewHolder(private val binding: LayoutListItemBinding) :
-        RecyclerView.ViewHolder(binding.root), View.OnLongClickListener {
+        RecyclerView.ViewHolder(binding.root), View.OnLongClickListener, View.OnClickListener {
         private lateinit var users: Users
+
+
+        var mMenus:ImageView = binding.edit
+
+        init {
+            mMenus.setOnClickListener { editUser() }
+        }
+
+
         fun bind() {
-            users = this@RecyclerAdapter.countries[adapterPosition]
+            users = this@RecyclerAdapter.userList[adapterPosition]
             binding.tvName.text = users.name
             binding.tvSurname.text = users.lastName
             binding.tvEmail.text = users.email
         }
 
+        private fun editUser() {
+
+            val position = userList[adapterPosition]
+
+            val v = LayoutInflater.from(context).inflate(R.layout.add_item, null)
+
+            val name = v.findViewById<EditText>(R.id.userName)
+            val number = v.findViewById<EditText>(R.id.userNo)
+            AlertDialog.Builder(context)
+                .setView(v)
+                .setPositiveButton("Ok") { dialog, _ ->
+                    position.name = name.text.toString()
+                    position.lastName = number.text.toString()
+                    position.email = number.text.toString()
+                    notifyDataSetChanged()
+                    Toast.makeText(context, "User Information is Edited", Toast.LENGTH_SHORT).show()
+                    dialog.dismiss()
+
+                }
+                .setNegativeButton("Cancel") { dialog, _ ->
+                    dialog.dismiss()
+
+                }
+                .create()
+                .show()
+
+        }
+
         init {
             itemView.setOnLongClickListener(this)
+            itemView.setOnClickListener(this)
+            mMenus.setOnClickListener { editUser() }
+
         }
 
         override fun onLongClick(v: View?): Boolean {
             val position = adapterPosition
             if (position != RecyclerView.NO_POSITION) {
-                listener.onItemClick(position)
+                listener.onItemLongClick(position)
             }
             return true
         }
+
+        override fun onClick(v: View?) {
+            val position = adapterPosition
+            if (position != RecyclerView.NO_POSITION) {
+                listener.onItemClick(item = users, position)
+            }
+
+        }
     }
 
-    override fun getItemViewType(position: Int): Int {
-        val model = countries[position]
-        return if (model.email == null)
-            USER_WITH_NO_PHOTO
-        else
-            NORMAL_USER
-    }
 
-    companion object {
-        const val NORMAL_USER = 1
-        const val USER_WITH_NO_PHOTO = 2
-    }
+
 
     interface OnItemModelClickListener {
-        fun onItemClick(position: Int)
+        fun onItemLongClick(position: Int)
+        fun onItemClick(item: Users, position: Int)
     }
 }
 
